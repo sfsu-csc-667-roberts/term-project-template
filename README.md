@@ -169,3 +169,31 @@ npm run start:dev
 ```
 
 We don't see anything different since we haven't made any changes, but now we can make a change to our route file (for example, updating the text), and just press the refresh button in the browser to see those changes reflected (without having to stop and start the server). If you look at the shell, you will see that `nodemon` causes the server to reload when it detected the file change.
+
+## Adding error handling to the server
+
+With the current implementation, if we try to visit a URL (route) that the express application does not understand, it responds with a simple text message. For example, with your server running, browse to [http://localhost:3000/nothing](http://localhost:3000/nothing). You will see the message:
+
+```
+Cannot GET /nothing
+```
+
+In order to create a better and more consistent user experience when an error is encountered, we will use the `http-errors` library:
+
+```
+npm install http-errors
+```
+
+Add this into the `server.js` file by importing the library at the top of the file, and then adding a middleware function _at the bottom of the file_. Adding this function at the bottom of the file is important - express attempts to match routes in the order they are defined, so if a valid route is defined, we want express to use that route logic instead of executing this function. Placing the function at the bottom of the file means it should only be reached (and therefore executed) if the requested URL does not get matched to any route.
+
+```js
+const createError = require("http-errors");
+
+/** Existing server.js content **/
+
+app.use((_request, _response, next) => {
+  next(createError(404));
+});
+```
+
+Visiting the page, we now see a very noisy (and informative) error message being displayed.
