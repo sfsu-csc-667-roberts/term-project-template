@@ -24,7 +24,7 @@ mkdir frontend backend
 Finally, create the entry point for our backend (this is just an empty file for now; we will add some code shortly):
 
 ```
-touch server.js
+touch backend/server.js
 ```
 
 To ensure that we do not commit certain files into our repository (`node_modules/` because they can be installed using npm install, and `.env` because it will hold strings that we do not want to make public, and that will be used only for local development):
@@ -79,3 +79,51 @@ node backend/server.js
 ```
 
 We can verify it is working by visiting [http://localhost:3000](http://localhost:3000), where we should see the text that we used the `response` object to send to the client (”Hello World!”).
+
+## Organizing the server code
+
+Eventually, we will be adding quite a few additional routes to the server, and we want to avoid creating a single, massive, hard to main server file. One tool that express provides us with is the `Router` ”middleware” (more on this later) that allows us to create individual routes in modules (separate files), and then “mount” those routes in our main application instance.
+
+Create a directory where our route logic will go, and an initial route file for our root routes:
+
+```
+mkdir backend/routes
+touch backend/routes/root.js
+```
+
+As we add additional functionality like authentication and authorization, game logic, chat logic, etc., we can break up the routes into easy to understand and maintain files in this new directory.
+
+Add the following code to import the express `Route` middleware, create the route we previously defined in `server.js`, and then export that route so that another module can import (require) it:
+
+```js
+const express = require("express");
+const router = express.Router();
+
+router.get("/", (request, response) => {
+  response.send("Hello world from within a route!");
+});
+
+module.exports = router;
+```
+
+Now, we can refactor `server.js` to include the following code:
+
+```jsx
+const express = require("express");
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+const rootRoutes = require("./backend/routes/root");
+
+app.use("/", rootRoutes);
+
+app.listen(PORT, () => {
+  console.log(`Server started on port ${PORT}`);
+});
+```
+
+This imports the routes that were exported from the `root.js` file, and then "mounts" all of the routes defined in that `Router` under the `"/"` URL (appends the URLs from the route to the root URL).
+
+If you left the server running from the previous section and refresh the [http://localhost:3000](http://localhost:3000) page, you won'’'t see a change! In order for node to load the change, it needs to reload the file. To do this stop the server (`Ctrl-C` on a \*nix system), and start it again using the `node backend/server.js` command. (This is tedious, and we will work on a way to automate this shortly.)
+
+Visiting [http://localhost:3000](http://localhost:3000) should now show us the updated content.
