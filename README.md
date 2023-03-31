@@ -656,3 +656,96 @@ Once verified, create a new `Web Service`.
 - Expand the `Advanced` section
   - Click on `Add Environment Variable`, and add the key `NODE_ENV` and the value `production`
 - Click on `Create Web Service`
+
+# Add Basic Routes (Milestone 2)
+
+Once you have completed your wireframes, you should have an understanding of the pages that you want to create. We can add some placeholder views and routes to start to flesh out our term project.
+
+We are going to (eventually) have two categories of routes: those that are responsible for serving the html pages (called static routes), and that that will be responsible for responding to API requests from the client. To organize these in the backend:
+
+```bash
+mkdir backend/routes/static backend/routes/api
+```
+
+We no longer need the root route, so `root.js` in `backend/routes` may be deleted. Note that you have or want additional pages, I am setting up these routes and views as they cover all of the routes that I want in my app:
+
+```bash
+touch backend/routes/static/{game,home,lobby,profile,sign-up}.js
+touch backend/views/{game,lobby,profile,sign-up}.ejs
+```
+
+To facilitate testing, I add html with a list of links to each view, so that I can click between pages and ensure I have correctly set up my routes. Example `home.ejs`:
+
+```html
+<html>
+  <head>
+    <title><%= title %></title>
+    <script src="/scripts/bundle.js"></script>
+    <link rel="stylesheet" href="/stylesheets/home.css" />
+  </head>
+  <body>
+    <h1>Home page (unauthenticated)</h1>
+
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/games/42">Games 42</a></li>
+      <li><a href="/lobby">Lobby</a></li>
+      <li><a href="/profile">Profile</a></li>
+      <li><a href="/sign-up">Sign Up</a></li>
+    </ul>
+  </body>
+</html>
+```
+
+The route files should be updated to render each of these templates. Example `game.js`:
+
+```js
+const express = require("express");
+
+const router = express.Router();
+
+router.get("/:id", (request, response) => {
+  const { id } = request.params;
+
+  if (id !== "42") {
+    response.redirect("/");
+  } else {
+    response.render("game", { title: "Term Project (Game)", id });
+  }
+});
+
+module.exports = router;
+```
+
+To make it easier to import these routes into `server.js` to mount them, you may create a "manifest" file named `static.js` in your `routes` directory:
+
+```bash
+touch backend/routes/static.js
+```
+
+```js
+const gameRoutes = require("./static/game.js");
+const homeRoutes = require("./static/home.js");
+const lobbyRoutes = require("./static/lobby.js");
+const profileRoutes = require("./static/profile.js");
+const signUpRoutes = require("./static/sign-up.js");
+
+module.exports = {
+  gameRoutes,
+  homeRoutes,
+  lobbyRoutes,
+  profileRoutes,
+  signUpRoutes,
+};
+```
+
+In `server.js`, these routes must now be mounted to their appropriate path:
+
+```js
+const routes = require("./routes/static.js");
+app.use("/", routes.homeRoutes);
+app.use("/games", routes.gameRoutes);
+app.use("/lobby", routes.lobbyRoutes);
+app.use("/profile", routes.profileRoutes);
+app.use("/sign-up", routes.signUpRoutes);
+```
