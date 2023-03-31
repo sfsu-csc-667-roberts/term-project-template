@@ -4,7 +4,7 @@
 
 - Install the `node` javascript runtime from [https://nodejs.org/en/download](https://nodejs.org/en/download)
 
-## Setting up our application’s directory structure
+## Setting up our application's directory structure
 
 Note that `the-empty-term-project-repository` will be created from the term project github assignment link in Canvas.
 
@@ -70,7 +70,7 @@ app.listen(PORT, () => {
 
 This code requires (another way of saying includes or imports) the `express` function (that is exported from the `express` package) into `server.js`, then uses the function to create an instance of an express application. (See [https://expressjs.com/en/5x/api.html#app](https://expressjs.com/en/5x/api.html#app) for the express application API.) We then set up a "route" - this defines an HTTP verb (in this case, `get`), and a URL (in this case, the root of our site: `"/"`) that the express server will monitor for requests.
 
-When an HTTP request is received that _matches this verb and URL_, the express application will invoke the "handler" function we define, passing in `request` and `response` objects that we can use to create a response to the client. In this case, we use the `response` object’s `send` method to respond with the text, "Hello World!".
+When an HTTP request is received that _matches this verb and URL_, the express application will invoke the "handler" function we define, passing in `request` and `response` objects that we can use to create a response to the client. In this case, we use the `response` object's `send` method to respond with the text, "Hello World!".
 
 We can run this using the `node` javascript runtime:
 
@@ -78,11 +78,11 @@ We can run this using the `node` javascript runtime:
 node backend/server.js
 ```
 
-We can verify it is working by visiting [http://localhost:3000](http://localhost:3000), where we should see the text that we used the `response` object to send to the client (”Hello World!”).
+We can verify it is working by visiting [http://localhost:3000](http://localhost:3000), where we should see the text that we used the `response` object to send to the client ("Hello World!").
 
 ## Organizing the server code
 
-Eventually, we will be adding quite a few additional routes to the server, and we want to avoid creating a single, massive, hard to main server file. One tool that express provides us with is the `Router` ”middleware” (more on this later) that allows us to create individual routes in modules (separate files), and then “mount” those routes in our main application instance.
+Eventually, we will be adding quite a few additional routes to the server, and we want to avoid creating a single, massive, hard to main server file. One tool that express provides us with is the `Router` "middleware" (more on this later) that allows us to create individual routes in modules (separate files), and then "mount" those routes in our main application instance.
 
 Create a directory where our route logic will go, and an initial route file for our root routes:
 
@@ -113,7 +113,7 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const rootRoutes = require("./backend/routes/root");
+const rootRoutes = require("./routes/root");
 
 app.use("/", rootRoutes);
 
@@ -124,6 +124,48 @@ app.listen(PORT, () => {
 
 This imports the routes that were exported from the `root.js` file, and then "mounts" all of the routes defined in that `Router` under the `"/"` URL (appends the URLs from the route to the root URL).
 
-If you left the server running from the previous section and refresh the [http://localhost:3000](http://localhost:3000) page, you won'’'t see a change! In order for node to load the change, it needs to reload the file. To do this stop the server (`Ctrl-C` on a \*nix system), and start it again using the `node backend/server.js` command. (This is tedious, and we will work on a way to automate this shortly.)
+If you left the server running from the previous section and refresh the [http://localhost:3000](http://localhost:3000) page, you won'''t see a change! In order for node to load the change, it needs to reload the file. To do this stop the server (`Ctrl-C` on a \*nix system), and start it again using the `node backend/server.js` command. (This is tedious, and we will work on a way to automate this shortly.)
 
 Visiting [http://localhost:3000](http://localhost:3000) should now show us the updated content.
+
+## Simplify startup
+
+We can use the `package.json` file to help simplify start up by adding a "script" entry that runs the startup command for us. (We will be adding additional scripts here as we continue development.) In `package.json`, in the `scripts` section, add the following entry:
+
+```
+"start": "node ./backend/server.js"
+```
+
+Now we can use the following command to start the server:
+
+```
+npm run start
+```
+
+This runs the `node ./backend/server.js` command, starting the server as we have seen in previous steps.
+
+Now, we can add another `scripts` entry to help reload the server as we make changes, so that we do not have to manually stop and start the server whenever a file is updated in order to see that change reflected in our site. To do this, we will use another library, `nodemon`, that will automatically restart the node process whenever a change is detected in a directory.
+
+First, install `nodemon`:
+
+```
+npm install nodemon --save-dev
+```
+
+Note that we will _only_ be using `nodemon` in our development environments - we do not want the server to reload in production if a file changes! For this reason, we use the `--save-dev` flag when installing `nodemon` to tell npm that the module should only be installed in a development environment.
+
+Now, we can add a new script to `package.json`:
+
+```
+"start:dev": "nodemon --watch backend ./backend/server.js"
+```
+
+We create this separate script so that we can add developer tools when we are programming, and so that we can omit those tools in the production environment (that's why we keep the `start` script).
+
+Now start the server:
+
+```
+npm run start:dev
+```
+
+We don't see anything different since we haven't made any changes, but now we can make a change to our route file (for example, updating the text), and just press the refresh button in the browser to see those changes reflected (without having to stop and start the server). If you look at the shell, you will see that `nodemon` causes the server to reload when it detected the file change.

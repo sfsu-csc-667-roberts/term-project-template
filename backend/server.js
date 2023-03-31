@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const rootRoutes = require("./backend/routes/root");
+const rootRoutes = require("./routes/root");
 
 app.use("/", rootRoutes);
 
