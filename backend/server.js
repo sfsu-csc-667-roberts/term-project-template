@@ -5,6 +5,10 @@ const createError = require("http-errors");
 
 const app = express();
 
+if (process.env.NODE_ENV === "development") {
+  require(path.join(__dirname, "development", "livereload.js"))(app);
+}
+
 const PORT = process.env.PORT || 3000;
 
 app.set("views", path.join(__dirname, "views"));

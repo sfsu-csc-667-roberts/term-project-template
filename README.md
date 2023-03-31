@@ -434,3 +434,105 @@ We will include this in the `layout.pug` file we created earlier by adding the f
 ```
 
 Make sure your server is running (`npm run start:dev`), and point your browser at [http://localhost:3000](http://localhost:3000) . Check the console in the browser, and you should now see the `console.log` statement we added in the `frontend/index.js` file.
+
+## Development is hard
+
+With our current scripts, we would have to run both `npm run start:dev` and `npm run build:dev` in order to have our front end code changes automatically bundled, and to have our back end changes cause the server to reload. In addition, when either of these changes happen, we have to manually reload the browser. Lets make it easier to manage all of this in our development environment with a few more changes to our project.
+
+First, lets add some libraries to help:
+
+```bash
+npm install --save-dev livereload connect-livereload
+```
+
+We need to integrate these with our server, but we only want this to happen while we're in the development environment. Change the `start:dev` script to add an environment variable named `NODE_ENV`:
+
+```json
+{
+  "scripts": {
+    "start:dev": "NODE_ENV=development nodemon --watch backend ./server.js"
+  }
+}
+```
+
+We will use this environment variable in our code to only run development code if this variable's value is `development` (we will set the value to `production` when we look at how to deploy our application).
+
+The setup for livereload can be placed in its own module.
+
+```bash
+mkdir backend/development
+touch backend/development/livereload.js
+```
+
+In `livereload.js`, add this function:
+
+```js
+const path = require("path");
+
+const setup = (app) => {
+  const livereload = require("livereload");
+  const connectLiveReload = require("connect-livereload");
+
+  const liveReloadServer = livereload.createServer();
+  liveReloadServer.watch(path.join(__dirname, "backend", "static"));
+  liveReloadServer.server.once("connection", () => {
+    setTimeout(() => {
+      liveReloadServer.refresh("/");
+    }, 100);
+  });
+
+  app.use(connectLiveReload());
+};
+
+module.exports = setup;
+```
+
+We will use this function to setup automatic reloading when we are in the development environment. To use the environment variable, update `server.js` to include the following, right after we create the `app` instance:
+
+```js
+if (process.env.NODE_ENV === "development") {
+  const livereload = require("livereload");
+  const connectLiveReload = require("connect-livereload");
+
+  const liveReloadServer = livereload.createServer();
+  liveReloadServer.watch(path.join(__dirname, "static"));
+  liveReloadServer.server.once("connection", () => {
+    setTimeout(() => {
+      liveReloadServer.refresh("/");
+    }, 100);
+  });
+
+  app.use(connectLiveReload());
+}
+```
+
+We also want to reload the server whenever we make a change to an `.ejs` file. Create a configuration file for `nodemon`:
+
+```bash
+touch nodemon.json
+```
+
+In this file, add the following:
+
+```json
+{
+  "ext": "js,ejs"
+}
+```
+
+Now we want to run _both_ the `nodemon` process and the `webpack` process concurrently:
+
+```json
+npm install --save-dev concurrently
+```
+
+We will change the `start:dev` script to use `concurrently`, and move the existing `start:dev` script to `server:dev` in `package.json`:
+
+```json
+{
+  "scripts": {
+    "start:dev": "concurrently \"npm:server:dev\" \"npm:build:dev\"",
+    "server:dev": "NODE_ENV=development nodemon --watch backend ./server.js"
+  }
+}
+```
