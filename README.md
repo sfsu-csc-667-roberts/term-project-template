@@ -260,7 +260,7 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-app.use(express.static(path.join(__dirname, "backend", "static")));
+app.use(express.static(path.join(__dirname, "static")));
 
 const rootRoutes = require("./backend/routes/root");
 
@@ -268,3 +268,85 @@ const rootRoutes = require("./backend/routes/root");
 ```
 
 To test this functionality, I added a `favicon.ico` file in the `static` directory, and used chrome (which annoyingly always asks for a favicon file, but its useful in this instance). When I refresh the root URL of my application, I can see in the network tab that the favicon is being returned, and that the route is still loading.
+
+## Creating content
+
+We can use `response.send()` to send html content to our client, for example:
+
+```js
+router.get("/", (request, response) => {
+  const name = "person";
+
+  response.send(
+    `<html><head><title>Hello</title><body><p>Hello ${name} html!</p></html>`
+  );
+});
+```
+
+As you can imagine, it could get really tedious generating these html strings by hand, especially when we want to insert dynamic information into the html (like the variable `name`, above). Express allows us to integrate a "template engine" that removes the tedium from dynamically generating html. A templating engine allows us to specify a template, provide it with values we want to plug into that template (sometimes called "locals"), and then uses the template to generate the HTML.
+
+There are a few different template engines supported by express. Feel free to research and use different template engines that are supported by express: [https://expressjs.com/en/resources/template-engines.html](https://expressjs.com/en/resources/template-engines.html). For this example, I will be using [`ejs`](https://ejs.co/) (embedded javascript) templates.
+
+First, install the template engine library:
+
+```
+npm install ejs
+```
+
+In `server.js`, tell the express application to use the template engine (doing this immediately after the application instance is created so that the engine is available for us in any route), and _where_ to find the templates:
+
+```jsx
+const app = express();
+
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "ejs");
+app.use(express.static(path.join(__dirname, "static")));
+```
+
+Create the directory to store our templates (also called views), and our first template file:
+
+```
+mkdir backend/views
+touch backend/views/home.ejs
+```
+
+In `home.ejs`, add:
+
+```html
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/stylesheets/home.css" />
+  </head>
+  <body>
+    <h1>Home page (unauthenticated)</h1>
+
+    <ul>
+      <li><a href="/">Home</a></li>
+    </ul>
+  </body>
+</html>
+```
+
+Return to our root route, and change `response.send` to:
+
+```js
+response.render("home", { title: "667 Term Project" });
+```
+
+Notice that in the view, I added a stylesheet. We will discuss stylesheets and CSS later in the semester; for now, create a directory `stylesheets` in our `static` directory, with a `home.css` file:
+
+```
+mkdir backend/static/stylesheets
+touch backend/static/stylesheets/home.css
+```
+
+In the `home.css` file, add:
+
+```css
+body {
+  background-color: rgba(0, 0, 255, 0.1);
+}
+```
+
+Switching `response.send` to `response.render` tells the express application to find a template, in this case `home`, and to provide the "locals" object with the `title` field to be used to fill out the template. Refresh the root page of our app, and you should see an html page with the dynamic content that was specified. Updating the variable values in the route will update the information displayed in the html.
