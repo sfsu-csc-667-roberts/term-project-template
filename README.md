@@ -197,3 +197,46 @@ app.use((_request, _response, next) => {
 ```
 
 Visiting the page, we now see a very noisy (and informative) error message being displayed.
+
+## So what is middleware?
+
+Middleware is a fancy term for "a function that will always be executed by the express application" (following the order rules discussed above). These functions have access to the `request` and `response` objects, as well as a special function named `next` that tells express to execute the next middleware in a chain of middleware.
+
+The routes that we've seen to this point are just a special type of middleware - functions that have access to the `request` and `response` objects, and that only execute for a _specific path (or URL)_. The routes we have written also end the request-response cycle, so they have not needed to use the `next` function to continue executing middleware; after we respond to a client request, there's nothing else we want to do.
+
+Since we will likely be writing additional middleware to support our project, lets create a `middleware` directory in our `backend` folder, and create a simple middleware to exercise our understanding:
+
+```
+mkdir backend/middleware
+touch backend/middleware/request-time.js
+```
+
+In `request-time.js`, add the code:
+
+```js
+const requestTime = (request, _response, next) => {
+  console.log(`Request received at ${Date.now()}: ${request.method}`);
+  next();
+};
+
+module.exports = requestTime;
+```
+
+Now, tell the express application to use this middleware in `server.js` (remember that the placement of this is important!):
+
+```js
+const createError = require("http-errors");
+const requestTime = require("./middleware/request-time");
+
+const express = require("express");
+const app = express();
+app.use(requestTime);
+
+const PORT = process.env.PORT || 3000;
+
+/* Rest of server.js */
+```
+
+Since this middleware was placed before all other middleware (including routes and the error handler), it always gets executed, printing out a timestamp and the HTTP verb used in the HTTP request sent to the express application.
+
+Now that we know a little more about middleware, we can remove this from `server.js`.

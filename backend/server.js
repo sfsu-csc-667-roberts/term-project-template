@@ -2,6 +2,7 @@ const express = require("express");
 const createError = require("http-errors");
 
 const app = express();
+
 const PORT = process.env.PORT || 3000;
 
 const rootRoutes = require("./routes/root");
