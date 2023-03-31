@@ -643,3 +643,16 @@ Now that we have some automation happening on every commit, we can also use it t
   }
 }
 ```
+
+# Deploy App to Render (Milestone 1.5)
+
+Go to [render.com](https://www.render.com) and sign in with github. You will be required to verify your email.
+
+Once verified, create a new `Web Service`.
+
+- For the `Build Command` field, use `npm install`.
+- For the `Start Command` field, use `npm run start`.
+- Select the free plan
+- Expand the `Advanced` section
+  - Click on `Add Environment Variable`, and add the key `NODE_ENV` and the value `production`
+- Click on `Create Web Service`
