@@ -536,3 +536,76 @@ We will change the `start:dev` script to use `concurrently`, and move the existi
   }
 }
 ```
+
+## Final touches
+
+To facilitate development (and eventually debugging), we will add a logging library called `morgan` to our application. Install the dependency:
+
+```bash
+npm install morgan
+```
+
+And tell the express application about it in `server.js` (immediately after the application object is created):
+
+```js
+const express = require("express");
+const morgan = require("morgan");
+const app = express();
+
+app.use(morgan("dev"));
+```
+
+Additional information will now be displayed in the shell as requests are made:
+
+```
+[nodemon] starting `node ./server.js`
+Server started on port 3000
+GET / 304 175.073 ms - -
+GET /stylesheets/home.css 304 1.138 ms - -
+GET /favicon.ico 304 0.500 ms - -
+```
+
+We want to add some additional utility to our server, namely the ability to support url encoded request bodies, json request bodies, and cookies. Supporting cookies requires a library, `cookie-parser`:
+
+```bash
+npm install cookie-parser
+```
+
+JSON and url encoded bodies are supported by express, with some minor setup. To setup all three of these, I made some additions to `server.json`, with the final version of my file looking like this:
+
+```js
+const path = require("path");
+
+const express = require("express");
+const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
+const createError = require("http-errors");
+
+const app = express();
+app.use(morgan("dev"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+
+if (process.env.NODE_ENV === "development") {
+  require(path.join(__dirname, "development", "livereload.js"))(app);
+}
+
+const PORT = process.env.PORT || 3000;
+
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "ejs");
+app.use(express.static(path.join(__dirname, "static")));
+
+const rootRoutes = require("./routes/root");
+
+app.use("/", rootRoutes);
+
+app.listen(PORT, () => {
+  console.log(`Server started on port ${PORT}`);
+});
+
+app.use((_request, _response, next) => {
+  next(createError(404));
+});
+```
