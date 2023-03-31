@@ -240,3 +240,31 @@ const PORT = process.env.PORT || 3000;
 Since this middleware was placed before all other middleware (including routes and the error handler), it always gets executed, printing out a timestamp and the HTTP verb used in the HTTP request sent to the express application.
 
 Now that we know a little more about middleware, we can remove this from `server.js`.
+
+## Serving static files
+
+Sometimes, we want to serve a static file - one that is not created by javascript logic in a route (images, stylesheets, etc.). To configure our express application to do this, create a directory to hold our static assets:
+
+```
+mkdir backend/static
+```
+
+Now, set up this directory so that express knows to serve static files from it. In `server.js`, add the following:
+
+```jsx
+const path = require("path");
+const createError = require("http-errors");
+
+const express = require("express");
+const app = express();
+
+const PORT = process.env.PORT || 3000;
+
+app.use(express.static(path.join(__dirname, "backend", "static")));
+
+const rootRoutes = require("./backend/routes/root");
+
+/* Rest of server.js */
+```
+
+To test this functionality, I added a `favicon.ico` file in the `static` directory, and used chrome (which annoyingly always asks for a favicon file, but its useful in this instance). When I refresh the root URL of my application, I can see in the network tab that the favicon is being returned, and that the route is still loading.
