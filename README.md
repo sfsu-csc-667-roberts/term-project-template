@@ -609,3 +609,37 @@ app.use((_request, _response, next) => {
   next(createError(404));
 });
 ```
+
+## Keeping code consistent
+
+It can be difficult to keep code consistent when working on a team of multiple developers. For that reason, we are going to automate code formatting, and use some tools to apply the code formatting every time we commit a change. First install the libraries that will manage this for us (since we only use these during development, we are using the `--save-dev` flag):
+
+```bash
+npm install --save-dev prettier husky lint-staged
+npm pkg set scripts.prepare="husky install"
+npm run prepare
+npx husky add .husky/pre-commit "npx lint-staged"
+# Make sure the hook is included in your repo
+git add .husky/pre-commit
+```
+
+Then, add the following to `package.json` (the outer braces in this snippet are the outer braces in `package.json`):
+
+```json
+{
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown"
+  }
+}
+```
+
+Now that we have some automation happening on every commit, we can also use it to ensure that our frontend code gets built for the production environment. One way to do this is to just have `webpacke` run on every commit. We can update the `lint-staged` entry in `package.json` to do this for us:
+
+```json
+{
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown",
+    "frontend/**/*.js": "webpack"
+  }
+}
+```
