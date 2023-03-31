@@ -8,7 +8,7 @@
 
 Note that `the-empty-term-project-repository` will be created from the term project github assignment link in Canvas.
 
-```
+```bash
 git clone the-empty-term-project-repository
 npm init -y
 ```
@@ -17,26 +17,26 @@ npm init -y
 
 Next, we will create directories to distinguish between our front end javascript (the code that will be delivered to the client to be able to implement things like chat functionality, and the ability to dynamically update a page) and our back end javascript (the code that will be used to respond to client requests).
 
-```
+```bash
 mkdir frontend backend
 ```
 
 Finally, create the entry point for our backend (this is just an empty file for now; we will add some code shortly):
 
-```
+```bash
 touch backend/server.js
 ```
 
 To ensure that we do not commit certain files into our repository (`node_modules/` because they can be installed using npm install, and `.env` because it will hold strings that we do not want to make public, and that will be used only for local development):
 
-```
+```bash
 touch .gitignore
 ```
 
 In the `.gitignore` file, add the following:
 
 ```
-node_modules/*
+node_modules/
 .env
 ```
 
@@ -46,7 +46,7 @@ We will be using [https://expressjs.com/](https://expressjs.com/) to implement t
 
 We use the node package manager (`npm`) to install the required dependency:
 
-```
+```bash
 npm install express
 ```
 
@@ -74,7 +74,7 @@ When an HTTP request is received that _matches this verb and URL_, the express a
 
 We can run this using the `node` javascript runtime:
 
-```
+```bash
 node backend/server.js
 ```
 
@@ -86,7 +86,7 @@ Eventually, we will be adding quite a few additional routes to the server, and w
 
 Create a directory where our route logic will go, and an initial route file for our root routes:
 
-```
+```bash
 mkdir backend/routes
 touch backend/routes/root.js
 ```
@@ -108,7 +108,7 @@ module.exports = router;
 
 Now, we can refactor `server.js` to include the following code:
 
-```jsx
+```js
 const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -138,7 +138,7 @@ We can use the `package.json` file to help simplify start up by adding a "script
 
 Now we can use the following command to start the server:
 
-```
+```bash
 npm run start
 ```
 
@@ -148,7 +148,7 @@ Now, we can add another `scripts` entry to help reload the server as we make cha
 
 First, install `nodemon`:
 
-```
+```bash
 npm install nodemon --save-dev
 ```
 
@@ -164,7 +164,7 @@ We create this separate script so that we can add developer tools when we are pr
 
 Now start the server:
 
-```
+```bash
 npm run start:dev
 ```
 
@@ -180,7 +180,7 @@ Cannot GET /nothing
 
 In order to create a better and more consistent user experience when an error is encountered, we will use the `http-errors` library:
 
-```
+```bash
 npm install http-errors
 ```
 
@@ -206,7 +206,7 @@ The routes that we've seen to this point are just a special type of middleware -
 
 Since we will likely be writing additional middleware to support our project, lets create a `middleware` directory in our `backend` folder, and create a simple middleware to exercise our understanding:
 
-```
+```bash
 mkdir backend/middleware
 touch backend/middleware/request-time.js
 ```
@@ -245,13 +245,13 @@ Now that we know a little more about middleware, we can remove this from `server
 
 Sometimes, we want to serve a static file - one that is not created by javascript logic in a route (images, stylesheets, etc.). To configure our express application to do this, create a directory to hold our static assets:
 
-```
+```bash
 mkdir backend/static
 ```
 
 Now, set up this directory so that express knows to serve static files from it. In `server.js`, add the following:
 
-```jsx
+```js
 const path = require("path");
 const createError = require("http-errors");
 
@@ -289,13 +289,13 @@ There are a few different template engines supported by express. Feel free to re
 
 First, install the template engine library:
 
-```
+```bash
 npm install ejs
 ```
 
 In `server.js`, tell the express application to use the template engine (doing this immediately after the application instance is created so that the engine is available for us in any route), and _where_ to find the templates:
 
-```jsx
+```js
 const app = express();
 
 app.set("views", path.join(__dirname, "views"));
@@ -305,7 +305,7 @@ app.use(express.static(path.join(__dirname, "static")));
 
 Create the directory to store our templates (also called views), and our first template file:
 
-```
+```bash
 mkdir backend/views
 touch backend/views/home.ejs
 ```
@@ -336,7 +336,7 @@ response.render("home", { title: "667 Term Project" });
 
 Notice that in the view, I added a stylesheet. We will discuss stylesheets and CSS later in the semester; for now, create a directory `stylesheets` in our `static` directory, with a `home.css` file:
 
-```
+```bash
 mkdir backend/static/stylesheets
 touch backend/static/stylesheets/home.css
 ```
@@ -350,3 +350,87 @@ body {
 ```
 
 Switching `response.send` to `response.render` tells the express application to find a template, in this case `home`, and to provide the "locals" object with the `title` field to be used to fill out the template. Refresh the root page of our app, and you should see an html page with the dynamic content that was specified. Updating the variable values in the route will update the information displayed in the html.
+
+## Setting up the frontend
+
+Eventually, we will be adding code specifically to handle the front end logic for our game (this will go in the `frontend` directory). In our front end code, we want to be able to utilize modern javascript, and to be able to organize our code into discrete modules (individual files) to make it easier to maintain. Unfortunately, the browser is not able to find this code unless we manually insert `<link>` and `<script>` tags for all of the different files.
+
+To avoid this manual process, we will use a modern build tool, `webpack` in order to aggregate all of our files into a single file, and place that file in the `public/` folder we created earlier. This way, we only have to add one `<script>` tag to our site, and that will include all of the front end code we have written.
+
+We need a few libraries to do this:
+
+```bash
+ npm install --save-dev webpack webpack-cli babel-loader
+```
+
+Webpack can be run manually, passing in configuration flags, or we can specify configuration in a special file named `webpack.config.js` at the root of our project:
+
+```bash
+touch webpack.config.js
+```
+
+In this file, we will define the configuration that the `webpack` tool will use to determine how to build our javascript, where to find the javascript we want built, and where to place the final build product. Add this code to the `webpack.config.js` file:
+
+```js
+const path = require("path");
+
+module.exports = {
+  entry: "./frontend/index.js",
+  output: {
+    path: path.join(__dirname, "backend", "static", "scripts"),
+    publicPath: "/backend/static/scripts",
+    filename: "bundle.js",
+  },
+  mode: "production",
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: { loader: "babel-loader" },
+      },
+    ],
+  },
+};
+```
+
+Here, we're telling `webpack` to start at `./frontend/index.js`, and to create a bundle of all of the javascript referenced from that file and all files it references (i.e. traversing the dependency tree of `import` statements, and ensuring that all code that is `import`ed is added to the resulting built artifact). The `module` `rules` section tells `webpack` to handle any file that ends with the extension `.js`. (We can use additional loaders with different extensions; for example if we wanted to use typescript - a strongly typed superset of javascript - we could test for the `.ts` extension, and use an appropriate loader to convert that into javascript that the browser could understand.) Finally, we tell `webpack` to output the resulting file in our `backend/static/scripts` directory, naming it `bundle.js`.
+
+With this configuration done, we will add another script into the `scripts` section of our `package.json` file in order to automate this build process. (The `build` script will be used to ensure a new package is created for production every time we deploy, and the `build:dev` script will be used while we are developing, to watch for changes, and re-run `webpack` when a change is detected.)
+
+```json
+{
+  "scripts": {
+    "build": "webpack",
+    "build:dev": "webpack --watch"
+  }
+}
+```
+
+Let's add the entry file into the `frontend` directory:
+
+```bash
+touch frontend/index.js
+```
+
+And add some basic code so we can check that this works as expected:
+
+```js
+console.log("Hello from a bundled asset.");
+```
+
+At the command line, use the `build` script:
+
+```bash
+npm run build
+```
+
+A new folder named `scripts` will be created in `/backend/static` containing the file `bundle.js`.
+
+We will include this in the `layout.pug` file we created earlier by adding the following `script` tag underneath the `link` tag:
+
+```html
+<script src="/scripts/bundle.js"></script>
+```
+
+Make sure your server is running (`npm run start:dev`), and point your browser at [http://localhost:3000](http://localhost:3000) . Check the console in the browser, and you should now see the `console.log` statement we added in the `frontend/index.js` file.
