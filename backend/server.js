@@ -5,6 +5,8 @@ const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const createError = require("http-errors");
 
+require("dotenv").config();
+
 const app = express();
 app.use(morgan("dev"));
 app.use(express.json());
